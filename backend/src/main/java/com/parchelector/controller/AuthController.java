@@ -4,13 +4,20 @@ import com.parchelector.dto.ApiResponse;
 import com.parchelector.dto.request.LoginRequest;
 import com.parchelector.dto.request.RegisterRequest;
 import com.parchelector.dto.response.AuthResponse;
+import com.parchelector.dto.response.UserProfileResponse;
+import com.parchelector.model.entity.User;
+import com.parchelector.repository.UserRepository;
 import com.parchelector.service.AuthService;
+import com.parchelector.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -25,6 +32,12 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * Register a new user.
@@ -71,6 +84,41 @@ public class AuthController {
                     null
             );
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+    }
+
+    /**
+     * Get current authenticated user profile.
+     */
+    @GetMapping("/me")
+    @Operation(summary = "Get current user profile", description = "Get profile data for the authenticated user")
+    @SecurityRequirement(name = "bearer-jwt")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getCurrentUserProfile() {
+        try {
+            // Get authenticated user from security context
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            // Find user by username
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+            // Get profile data
+            UserProfileResponse profile = userService.getUserProfile(user.getId());
+
+            ApiResponse<UserProfileResponse> response = new ApiResponse<>(
+                    "SUCCESS",
+                    "Profile retrieved successfully",
+                    profile
+            );
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<UserProfileResponse> response = new ApiResponse<>(
+                    "ERROR",
+                    e.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 }
