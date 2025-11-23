@@ -52,13 +52,11 @@ CREATE TABLE book_genres (
   PRIMARY KEY(book_id, genre_id)
 );
 
-CREATE TYPE reading_status_enum AS ENUM ('WANT_TO_READ', 'READING', 'READ');
-
 CREATE TABLE reading_status (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL,
   book_id INTEGER NOT NULL,
-  status reading_status_enum NOT NULL,
+  status VARCHAR(32) NOT NULL,
   progress_percent INTEGER DEFAULT 0,
   started_at DATE,
   finished_at DATE,
@@ -94,14 +92,12 @@ CREATE TABLE review_comments (
   is_deleted BOOLEAN NOT NULL DEFAULT false
 );
 
-CREATE TYPE visibility_enum AS ENUM ('PUBLIC', 'PRIVATE');
-
 CREATE TABLE library_lists (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL,
   name VARCHAR(140) NOT NULL,
   description TEXT,
-  visibility visibility_enum NOT NULL DEFAULT 'PUBLIC',
+  visibility VARCHAR(16) NOT NULL DEFAULT 'PUBLIC',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -37,7 +37,7 @@ public class ReadingStatus {
     private Book book;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "reading_status_enum")
+    @Column(nullable = false, length = 32)
     private ReadingStatusEnum status;
 
     @Column(name = "progress_percent")
