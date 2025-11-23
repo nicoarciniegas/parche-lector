@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository interface for ReadingStatus entity.
@@ -21,4 +22,7 @@ public interface ReadingStatusRepository extends JpaRepository<ReadingStatus, Lo
            "WHERE rs.user.id = :userId " +
            "ORDER BY rs.updatedAt DESC")
     List<ReadingStatus> findByUserIdWithBooks(Long userId);
+
+    @Query("SELECT rs FROM ReadingStatus rs WHERE rs.user.id = :userId AND rs.book.id = :bookId")
+    Optional<ReadingStatus> findByUserIdAndBookId(Long userId, Long bookId);
 }
