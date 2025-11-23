@@ -15,7 +15,7 @@
 -- USUARIOS (contraseña: "password123" encriptada con BCrypt)
 INSERT INTO users (username, email, password_hash, avatar_url, bio, is_active) VALUES
 ('ana_lector', 'ana@email.com', '$2a$10$Xl0R0QVFbLvqNp.kL9xKp.jYpXKPzO8YJf.ZG8xQqKQxTqKLJpJXG', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ana&backgroundColor=F9C846', 'Apasionada lectora. Me gusta descubrir autores clásicos y nuevas voces.', true),
-('carlos_book', 'carlos@email.com', '$2a$10$Xl0R0QVFbLvqNp.kL9xKp.jYpXKPzO8YJf.ZG8xQqKQxTqKLJpJXG', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos&backgroundColor=6B9080', 'Amante de la ciencia ficción y fantasía.', true),
+('carlos_book', 'carlos@email.com', '$2a$12$3hVS1g0.4Y013UMNKOG4Uec1QHFjo65hK26i2cCbVPMstfdDDhnVa', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos&backgroundColor=6B9080', 'Amante de la ciencia ficción y fantasía.', true),
 ('maria_reads', 'maria@email.com', '$2a$10$Xl0R0QVFbLvqNp.kL9xKp.jYpXKPzO8YJf.ZG8xQqKQxTqKLJpJXG', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maria&backgroundColor=2E5266', 'Leo de todo un poco. Fan de los clásicos.', true),
 ('pedro_writer', 'pedro@email.com', '$2a$10$Xl0R0QVFbLvqNp.kL9xKp.jYpXKPzO8YJf.ZG8xQqKQxTqKLJpJXG', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pedro&backgroundColor=A4B494', 'Escritor aficionado y lector empedernido.', true),
 ('lucia_pages', 'lucia@email.com', '$2a$10$Xl0R0QVFbLvqNp.kL9xKp.jYpXKPzO8YJf.ZG8xQqKQxTqKLJpJXG', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucia&backgroundColor=E8DCC8', 'Lectora nocturna. Romance y misterio.', true);
