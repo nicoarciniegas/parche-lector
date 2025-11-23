@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 /**
  * Repository interface for Follow entity.
  * 
@@ -19,4 +21,10 @@ public interface FollowRepository extends JpaRepository<Follow, FollowId> {
 
     @Query("SELECT COUNT(f) FROM Follow f WHERE f.followerId = :userId")
     long countFollowingByUserId(Long userId);
+
+    boolean existsByFollowerIdAndFollowedId(Long followerId, Long followedId);
+
+    void deleteByFollowerIdAndFollowedId(Long followerId, Long followedId);
+
+    Optional<Follow> findByFollowerIdAndFollowedId(Long followerId, Long followedId);
 }
