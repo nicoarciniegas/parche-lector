@@ -337,6 +337,59 @@ Buscar libros por título o autor.
 
 ---
 
+#### GET /books/filter
+Filtrar y ordenar libros con opciones avanzadas.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `genre` (opcional): Filtrar por género específico (ej: "Ficción", "Ciencia ficción")
+- `minYear` (opcional): Año de publicación mínimo
+- `maxYear` (opcional): Año de publicación máximo
+- `sortBy` (opcional): Criterio de ordenamiento (default: "popular")
+  - `"popular"` - Más populares (más reseñas y estados de lectura)
+  - `"rating"` - Mejor calificados (promedio de ratings más alto)
+  - `"newest"` - Más recientes (año de publicación descendente)
+  - `"oldest"` - Más antiguos (año de publicación ascendente)
+- `limit` (opcional): Número de resultados (default: 20)
+
+**Examples:**
+```
+GET /books/filter?sortBy=rating&limit=10
+GET /books/filter?genre=Ficción&sortBy=newest
+GET /books/filter?minYear=2000&maxYear=2020&sortBy=rating
+```
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Books retrieved successfully",
+  "data": [
+    {
+      "id": 5,
+      "title": "Cien años de soledad",
+      "author": "Gabriel García Márquez",
+      "averageRating": 4.8,
+      "coverUrl": "https://...",
+      "readingStatus": "READ"
+    }
+  ]
+}
+```
+
+**Errores posibles:**
+- `Invalid sortBy parameter. Must be 'popular', 'rating', 'newest', or 'oldest'` - Parámetro sortBy inválido
+
+**Notas:**
+- Todos los filtros son opcionales y se pueden combinar
+- Si no se especifica ningún filtro, retorna todos los libros ordenados según `sortBy`
+- El ordenamiento `"popular"` cuenta la suma de reseñas y estados de lectura
+- El ordenamiento `"rating"` usa el promedio de calificaciones (libros sin rating van al final)
+- Los ordenamientos `"newest"` y `"oldest"` usan el año de publicación (nulls al final)
+
+---
+
 #### POST /books/reading-status
 Actualizar el estado de lectura de un libro.
 
@@ -1399,6 +1452,22 @@ curl -X GET http://localhost:8080/books/trending?limit=10 \
 curl -X GET "http://localhost:8080/books/search?query=garcia" \
   -H "Authorization: Bearer <TOKEN>"
 
+# Filtrar y ordenar libros (más populares)
+curl -X GET "http://localhost:8080/books/filter?sortBy=popular&limit=10" \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Filtrar por género y ordenar por rating
+curl -X GET "http://localhost:8080/books/filter?genre=Ficción&sortBy=rating" \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Filtrar por rango de años
+curl -X GET "http://localhost:8080/books/filter?minYear=1960&maxYear=1990&sortBy=rating" \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Ordenar por más recientes
+curl -X GET "http://localhost:8080/books/filter?sortBy=newest&limit=20" \
+  -H "Authorization: Bearer <TOKEN>"
+
 # Actualizar estado de lectura
 curl -X POST http://localhost:8080/books/reading-status \
   -H "Authorization: Bearer <TOKEN>" \
@@ -1721,6 +1790,7 @@ curl -X GET http://localhost:8080/users/2/reviews \
   - `GET /auth/activity` - Obtener actividad (reviews, listas, stats)
   - `GET /books/trending` - Libros en tendencia
   - `GET /books/search` - Buscar libros
+  - `GET /books/filter` - Filtrar y ordenar libros (popular, rating, newest, oldest)
   - `POST /books/reading-status` - Actualizar estado de lectura
   - `POST /lists` - Crear lista de lectura
   - `GET /lists/{id}` - Ver detalles de lista

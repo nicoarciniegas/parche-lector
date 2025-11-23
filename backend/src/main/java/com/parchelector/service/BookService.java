@@ -241,4 +241,45 @@ public class BookService {
                 })
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Filter and sort books with advanced options.
+     * @param sortBy Options: "popular", "rating", "newest", "oldest"
+     */
+    @Transactional(readOnly = true)
+    public List<BookResponse> filterAndSortBooks(Long userId, String genre, 
+                                                   Integer minYear, Integer maxYear, 
+                                                   String sortBy, int limit) {
+        // Validate sortBy parameter
+        if (!sortBy.equals("popular") && !sortBy.equals("rating") && 
+            !sortBy.equals("newest") && !sortBy.equals("oldest")) {
+            throw new IllegalArgumentException("Invalid sortBy parameter. Must be 'popular', 'rating', 'newest', or 'oldest'");
+        }
+
+        Pageable pageable = PageRequest.of(0, limit);
+        List<Book> books;
+
+        // Apply filters and sorting
+        switch (sortBy) {
+            case "rating":
+                books = bookRepository.findBooksFilteredAndSortedByRating(
+                    genre, minYear, maxYear, pageable);
+                break;
+            case "newest":
+                books = bookRepository.findBooksFilteredAndSortedByNewest(
+                    genre, minYear, maxYear, pageable);
+                break;
+            case "oldest":
+                books = bookRepository.findBooksFilteredAndSortedByOldest(
+                    genre, minYear, maxYear, pageable);
+                break;
+            default: // popular
+                books = bookRepository.findBooksFilteredAndSortedByPopularity(
+                    genre, minYear, maxYear, pageable);
+        }
+
+        return books.stream()
+                .map(book -> mapToBookResponse(book, userId))
+                .collect(Collectors.toList());
+    }
 }

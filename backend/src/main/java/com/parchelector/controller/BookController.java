@@ -93,6 +93,45 @@ public class BookController {
     }
 
     /**
+     * Filter and sort books with advanced options.
+     */
+    @GetMapping("/filter")
+    @Operation(summary = "Filter and sort books", description = "Get books with advanced filtering and sorting options")
+    @SecurityRequirement(name = "bearer-jwt")
+    public ResponseEntity<ApiResponse<List<BookResponse>>> filterBooks(
+            @RequestParam(required = false) String genre,
+            @RequestParam(required = false) Integer minYear,
+            @RequestParam(required = false) Integer maxYear,
+            @RequestParam(defaultValue = "popular") String sortBy,
+            @RequestParam(defaultValue = "20") int limit) {
+        try {
+            Long userId = getCurrentUserId();
+            List<BookResponse> books = bookService.filterAndSortBooks(userId, genre, minYear, maxYear, sortBy, limit);
+            
+            ApiResponse<List<BookResponse>> response = new ApiResponse<>(
+                    "SUCCESS",
+                    "Books retrieved successfully",
+                    books
+            );
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            ApiResponse<List<BookResponse>> response = new ApiResponse<>(
+                    "ERROR",
+                    e.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            ApiResponse<List<BookResponse>> response = new ApiResponse<>(
+                    "ERROR",
+                    "Failed to retrieve books: " + e.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
      * Update reading status for a book.
      */
     @PostMapping("/reading-status")
