@@ -1,5 +1,6 @@
 <template>
-  <div class="profile-page">
+    <div v-if="isLoading" class="loading">Cargando perfil...</div>
+    <div v-else class="profile-page">
     <header class="profile-header">
       <div class="profile-left">
         <div class="avatar-large">
@@ -54,8 +55,10 @@
           </div>
         </div>
         <footer class="modal-footer">
-          <button class="btn outline" @click="closeEdit">Cancelar</button>
-          <button class="btn primary" @click="saveEdit">Guardar</button>
+          <button class="btn outline" @click="closeEdit" :disabled="isUpdating">Cancelar</button>
+          <button class="btn primary" @click="saveEdit" :disabled="isUpdating">
+            {{ isUpdating ? 'Guardando...' : 'Guardar' }}
+          </button>
         </footer>
       </div>
     </div>
@@ -165,55 +168,33 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { authUtils } from '../utils/auth'
+import { authUtils } from '../../../utils/auth'
+import { useMyProfile, useUpdateProfile } from '../composables/useProfile'
 
 const router = useRouter()
 
-const userName = ref('Ana')
-const userAvatar = ref(
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Ana&backgroundColor=F9C846'
-)
-const bio = ref(
-  'Apasionada lectora. Me gusta descubrir autores clásicos y nuevas voces. Compartiendo reseñas y recomendaciones aquí.'
-)
-const followers = ref(128)
-const following = ref(42)
+// Fetch profile data
+const { data: user, isLoading } = useMyProfile()
+const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile()
 
-const userBooks = ref([
-  {
-    id: 101,
-    title: 'Cien años de soledad',
-    author: 'Gabriel García Márquez',
-    rating: 4.9,
-    cover: 'https://picsum.photos/200/300?random=11',
-    status: 'leido',
-  },
-  {
-    id: 102,
-    title: 'Rayuela',
-    author: 'Julio Cortázar',
-    rating: 4.3,
-    cover: 'https://picsum.photos/200/300?random=12',
-    status: 'leyendo',
-  },
-  {
-    id: 103,
-    title: 'La casa de los espíritus',
-    author: 'Isabel Allende',
-    rating: 4.6,
-    cover: 'https://picsum.photos/200/300?random=13',
-    status: 'por_leer',
-  },
-])
+// Computed properties for UI
+const userName = computed(() => user.value?.userName || 'Usuario')
+const userAvatar = computed(() => user.value?.userAvatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User&backgroundColor=F9C846')
+const bio = computed(() => user.value?.bio || 'Sin biografía')
+const followers = computed(() => user.value?.followers || 0)
+const following = computed(() => user.value?.following || 0)
+const userBooks = computed(() => user.value?.userBooks || [])
 
+// Filter books by status
+// API returns: READING, READ, WANT_TO_READ
 const readingBooks = computed(() =>
-  userBooks.value.filter((b) => b.status === 'leyendo')
+  userBooks.value.filter((b) => b.status === 'READING')
 )
 const readBooks = computed(() =>
-  userBooks.value.filter((b) => b.status === 'leido')
+  userBooks.value.filter((b) => b.status === 'READ')
 )
 const toReadBooks = computed(() =>
-  userBooks.value.filter((b) => b.status === 'por_leer')
+  userBooks.value.filter((b) => b.status === 'WANT_TO_READ')
 )
 
 // Edit profile modal state and handlers
@@ -228,20 +209,35 @@ const openEdit = () => {
   editAvatar.value = userAvatar.value
   showEdit.value = true
 }
+
 const closeEdit = () => {
   showEdit.value = false
 }
+
 const saveEdit = () => {
   // Basic validation
   if (!editName.value.trim()) {
     alert('El nombre no puede quedar vacío')
     return
   }
-  userName.value = editName.value.trim()
-  bio.value = editBio.value.trim()
-  userAvatar.value = editAvatar.value.trim() || userAvatar.value
-  showEdit.value = false
+
+  updateProfile(
+    {
+      username: editName.value.trim(),
+      bio: editBio.value.trim(),
+      avatarUrl: editAvatar.value.trim()
+    },
+    {
+      onSuccess: () => {
+        showEdit.value = false
+      },
+      onError: (error) => {
+        alert('Error al actualizar perfil: ' + error.message)
+      }
+    }
+  )
 }
+
 const logout = () => {
   authUtils.removeToken()
   router.push('/welcome')
@@ -249,9 +245,9 @@ const logout = () => {
 
 const statusLabel = (s?: string) => {
   if (!s) return ''
-  if (s === 'leido') return 'Leído'
-  if (s === 'leyendo') return 'Leyendo'
-  if (s === 'por_leer') return 'Por leer'
+  if (s === 'READ') return 'Leído'
+  if (s === 'READING') return 'Leyendo'
+  if (s === 'WANT_TO_READ') return 'Por leer'
   return s
 }
 </script>
