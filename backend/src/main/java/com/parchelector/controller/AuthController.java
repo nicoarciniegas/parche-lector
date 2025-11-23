@@ -1,8 +1,10 @@
 package com.parchelector.controller;
 
 import com.parchelector.dto.ApiResponse;
+import com.parchelector.dto.request.ForgotPasswordRequest;
 import com.parchelector.dto.request.LoginRequest;
 import com.parchelector.dto.request.RegisterRequest;
+import com.parchelector.dto.request.ResetPasswordRequest;
 import com.parchelector.dto.response.AuthResponse;
 import com.parchelector.dto.response.UserProfileResponse;
 import com.parchelector.model.entity.User;
@@ -119,6 +121,51 @@ public class AuthController {
                     null
             );
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Request password reset email")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        try {
+            authService.requestPasswordReset(request.getEmail());
+            
+            ApiResponse<Void> response = new ApiResponse<>(
+                    "SUCCESS",
+                    "Password reset email sent. Please check your inbox.",
+                    null
+            );
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            // For security, don't reveal if email exists or not
+            ApiResponse<Void> response = new ApiResponse<>(
+                    "SUCCESS",
+                    "If the email exists, a password reset link has been sent.",
+                    null
+            );
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Confirm password reset with token")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        try {
+            authService.confirmPasswordReset(request.getToken(), request.getNewPassword());
+            
+            ApiResponse<Void> response = new ApiResponse<>(
+                    "SUCCESS",
+                    "Password has been reset successfully. You can now login with your new password.",
+                    null
+            );
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            ApiResponse<Void> response = new ApiResponse<>(
+                    "ERROR",
+                    e.getMessage(),
+                    null
+            );
+            return ResponseEntity.badRequest().body(response);
         }
     }
 }

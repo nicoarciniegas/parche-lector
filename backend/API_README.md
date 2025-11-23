@@ -134,6 +134,59 @@ Obtener perfil del usuario autenticado.
 
 ---
 
+#### POST /auth/forgot-password
+Solicitar reseteo de contraseña (envía email con token).
+
+**Request Body:**
+```json
+{
+  "email": "ana@email.com"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "If the email exists, a password reset link has been sent.",
+  "data": null
+}
+```
+
+**Notas:**
+- Envía un email con un enlace que contiene el token
+- El token expira en 1 hora
+- Por seguridad, siempre responde con éxito (no revela si el email existe)
+
+---
+
+#### POST /auth/reset-password
+Confirmar reseteo de contraseña con token (desde el enlace del email).
+
+**Request Body:**
+```json
+{
+  "token": "Xy8kL2pQ9mN4vB7cT1fG6hR3aZ5eW0uY",
+  "newPassword": "nuevaPassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Password has been reset successfully. You can now login with your new password.",
+  "data": null
+}
+```
+
+**Errores posibles:**
+- Token inválido o expirado
+- Token ya utilizado
+- Contraseña no cumple requisitos mínimos
+
+---
+
 ### 📖 Books (`/books`)
 
 #### GET /books/trending
@@ -245,7 +298,21 @@ curl -X POST http://localhost:8080/auth/login \
   -d '{"usernameOrEmail":"ana_lector","password":"password123"}'
 ```
 
-### 2. Usar Endpoints Protegidos
+### 2. Reseteo de Contraseña
+
+```bash
+# Solicitar reseteo (se envía email)
+curl -X POST http://localhost:8080/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ana@email.com"}'
+
+# Confirmar reseteo con token (desde el email)
+curl -X POST http://localhost:8080/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{"token":"TOKEN_DEL_EMAIL","newPassword":"nuevaPassword123"}'
+```
+
+### 3. Usar Endpoints Protegidos
 
 ```bash
 # Obtener perfil (reemplaza <TOKEN> con tu token JWT)

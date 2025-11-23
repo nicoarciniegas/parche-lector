@@ -3,7 +3,9 @@ package com.parchelector.service;
 import com.parchelector.dto.request.LoginRequest;
 import com.parchelector.dto.request.RegisterRequest;
 import com.parchelector.dto.response.AuthResponse;
+import com.parchelector.model.entity.PasswordResetToken;
 import com.parchelector.model.entity.User;
+import com.parchelector.repository.PasswordResetTokenRepository;
 import com.parchelector.repository.UserRepository;
 import com.parchelector.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.Base64;
 
 /**
  * Service for authentication operations.
@@ -34,6 +40,14 @@ public class AuthService {
 
     @Autowired
     private JwtTokenProvider tokenProvider;
+
+    @Autowired
+    private PasswordResetTokenRepository tokenRepository;
+
+    @Autowired
+    private EmailService emailService;
+
+    private static final SecureRandom secureRandom = new SecureRandom();
 
     /**
      * Register a new user.
@@ -103,5 +117,63 @@ public class AuthService {
                 user.getEmail(),
                 user.getRole()
         );
+    }
+
+    /**
+     * Request password reset - generates token and sends email.
+     */
+    @Transactional
+    public void requestPasswordReset(String email) {
+        // Find user by email
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with this email"));
+
+        // Delete any existing tokens for this user
+        tokenRepository.deleteByUserId(user.getId());
+
+        // Generate secure random token
+        byte[] randomBytes = new byte[32];
+        secureRandom.nextBytes(randomBytes);
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+
+        // Create and save token
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setUser(user);
+        resetToken.setTokenHash(passwordEncoder.encode(token));
+        resetToken.setExpiresAt(LocalDateTime.now().plusHours(1));
+        tokenRepository.save(resetToken);
+
+        // Send email with plain token (not hashed)
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), token);
+    }
+
+    /**
+     * Confirm password reset using token.
+     */
+    @Transactional
+    public void confirmPasswordReset(String token, String newPassword) {
+        // Find all tokens and check which one matches
+        PasswordResetToken resetToken = tokenRepository.findAll().stream()
+                .filter(t -> passwordEncoder.matches(token, t.getTokenHash()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token"));
+
+        // Validate token
+        if (resetToken.isUsed()) {
+            throw new IllegalArgumentException("This reset token has already been used");
+        }
+
+        if (resetToken.isExpired()) {
+            throw new IllegalArgumentException("This reset token has expired");
+        }
+
+        // Update user password
+        User user = resetToken.getUser();
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // Mark token as used
+        resetToken.setUsedAt(LocalDateTime.now());
+        tokenRepository.save(resetToken);
     }
 }
