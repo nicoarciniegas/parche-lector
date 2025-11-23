@@ -124,9 +124,13 @@ public class AuthService {
      */
     @Transactional
     public void requestPasswordReset(String email) {
-        // Find user by email
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with this email"));
+        // Find user by email - don't throw exception to prevent email enumeration
+        User user = userRepository.findByEmail(email).orElse(null);
+        
+        if (user == null) {
+            // Don't reveal that email doesn't exist, just return silently
+            return;
+        }
 
         // Delete any existing tokens for this user
         tokenRepository.deleteByUserId(user.getId());
@@ -143,8 +147,14 @@ public class AuthService {
         resetToken.setExpiresAt(LocalDateTime.now().plusHours(1));
         tokenRepository.save(resetToken);
 
-        // Send email with plain token (not hashed)
-        emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), token);
+        // Try to send email - if it fails, log but don't throw exception
+        try {
+            emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), token);
+        } catch (Exception e) {
+            // Log error but don't expose it to the user
+            System.err.println("Failed to send password reset email: " + e.getMessage());
+            throw new RuntimeException("Failed to send password reset email. Please check email configuration.");
+        }
     }
 
     /**
