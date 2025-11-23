@@ -128,6 +128,98 @@ public class BookController {
     }
 
     /**
+     * Get all favorite books for current user.
+     */
+    @GetMapping("/favorites")
+    @Operation(summary = "Get user's favorite books", security = @SecurityRequirement(name = "bearer-jwt"))
+    public ResponseEntity<ApiResponse<List<BookResponse>>> getFavorites() {
+        try {
+            Long userId = getCurrentUserId();
+            List<BookResponse> favorites = bookService.getUserFavorites(userId);
+            
+            ApiResponse<List<BookResponse>> response = new ApiResponse<>(
+                    "SUCCESS",
+                    "Favorites retrieved successfully",
+                    favorites
+            );
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<List<BookResponse>> response = new ApiResponse<>(
+                    "ERROR",
+                    e.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Add a book to favorites.
+     */
+    @PostMapping("/favorites")
+    @Operation(summary = "Add a book to favorites", security = @SecurityRequirement(name = "bearer-jwt"))
+    public ResponseEntity<ApiResponse<Void>> addFavorite(@Valid @RequestBody com.parchelector.dto.request.FavoriteBookRequest request) {
+        try {
+            Long userId = getCurrentUserId();
+            bookService.addFavorite(userId, request);
+            
+            ApiResponse<Void> response = new ApiResponse<>(
+                    "SUCCESS",
+                    "Book added to favorites successfully",
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            ApiResponse<Void> response = new ApiResponse<>(
+                    "ERROR",
+                    e.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            ApiResponse<Void> response = new ApiResponse<>(
+                    "ERROR",
+                    e.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Remove a book from favorites.
+     */
+    @DeleteMapping("/favorites/{bookId}")
+    @Operation(summary = "Remove a book from favorites", security = @SecurityRequirement(name = "bearer-jwt"))
+    public ResponseEntity<ApiResponse<Void>> removeFavorite(@PathVariable Long bookId) {
+        try {
+            Long userId = getCurrentUserId();
+            bookService.removeFavorite(userId, bookId);
+            
+            ApiResponse<Void> response = new ApiResponse<>(
+                    "SUCCESS",
+                    "Book removed from favorites successfully",
+                    null
+            );
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            ApiResponse<Void> response = new ApiResponse<>(
+                    "ERROR",
+                    e.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            ApiResponse<Void> response = new ApiResponse<>(
+                    "ERROR",
+                    e.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
      * Get current authenticated user ID.
      */
     private Long getCurrentUserId() {

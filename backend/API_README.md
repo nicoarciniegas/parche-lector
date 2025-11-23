@@ -550,6 +550,87 @@ Remover un libro de una lista.
 
 ---
 
+### ⭐ Favorites (`/books/favorites`)
+
+#### GET /books/favorites
+Obtener todos los libros favoritos del usuario.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Favorites retrieved successfully",
+  "data": [
+    {
+      "id": 1,
+      "title": "Cien años de soledad",
+      "author": "Gabriel García Márquez",
+      "rating": 0.0,
+      "cover": "https://...",
+      "status": null
+    },
+    {
+      "id": 5,
+      "title": "El amor en los tiempos del cólera",
+      "author": "Gabriel García Márquez",
+      "rating": 0.0,
+      "cover": "https://...",
+      "status": null
+    }
+  ]
+}
+```
+
+---
+
+#### POST /books/favorites
+Añadir un libro a favoritos.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "bookId": 1
+}
+```
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Book added to favorites successfully",
+  "data": null
+}
+```
+
+**Errores posibles:**
+- `Book is already in favorites` - El libro ya está en favoritos
+- `Book not found` - El libro no existe
+
+---
+
+#### DELETE /books/favorites/{bookId}
+Remover un libro de favoritos.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Book removed from favorites successfully",
+  "data": null
+}
+```
+
+**Errores posibles:**
+- `Book is not in favorites` - El libro no está en favoritos
+
+---
+
 ## 🔧 Códigos de Estado HTTP
 
 - `200 OK` - Solicitud exitosa
@@ -661,6 +742,24 @@ curl -X DELETE http://localhost:8080/lists/1/books/1 \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
+### 6. Gestión de Favoritos (Con Autenticación)
+
+```bash
+# Obtener todos los favoritos
+curl -X GET http://localhost:8080/books/favorites \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Añadir un libro a favoritos
+curl -X POST http://localhost:8080/books/favorites \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"bookId":1}'
+
+# Remover un libro de favoritos
+curl -X DELETE http://localhost:8080/books/favorites/1 \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
 ---
 
 ## 📝 Notas Importantes
@@ -686,6 +785,9 @@ curl -X DELETE http://localhost:8080/lists/1/books/1 \
   - `DELETE /lists/{id}` - Eliminar lista
   - `POST /lists/{id}/books` - Añadir libro a lista
   - `DELETE /lists/{id}/books/{bookId}` - Remover libro de lista
+  - `GET /books/favorites` - Ver libros favoritos
+  - `POST /books/favorites` - Añadir libro a favoritos
+  - `DELETE /books/favorites/{bookId}` - Remover libro de favoritos
 - La documentación se genera automáticamente desde el código
 - Todos los endpoints están documentados en Swagger UI
 - El manejo de errores está centralizado y devuelve códigos HTTP apropiados

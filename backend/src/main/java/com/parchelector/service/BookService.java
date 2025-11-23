@@ -1,15 +1,10 @@
 package com.parchelector.service;
 
+import com.parchelector.dto.request.FavoriteBookRequest;
 import com.parchelector.dto.request.ReadingStatusRequest;
 import com.parchelector.dto.response.BookResponse;
-import com.parchelector.model.entity.Book;
-import com.parchelector.model.entity.ReadingStatus;
-import com.parchelector.model.entity.Review;
-import com.parchelector.model.entity.User;
-import com.parchelector.repository.BookRepository;
-import com.parchelector.repository.ReadingStatusRepository;
-import com.parchelector.repository.ReviewRepository;
-import com.parchelector.repository.UserRepository;
+import com.parchelector.model.entity.*;
+import com.parchelector.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +34,9 @@ public class BookService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private FavoriteBookRepository favoriteBookRepository;
 
     /**
      * Get trending books (most reviewed/rated books).
@@ -168,7 +166,7 @@ public class BookService {
     }
 
     /**
-     * Convert backend status enum to frontend status string.
+     * Convert backend ReadingStatusEnum to frontend format.
      */
     private String convertStatusToFrontend(ReadingStatus.ReadingStatusEnum status) {
         switch (status) {
@@ -181,5 +179,66 @@ public class BookService {
             default:
                 return null;
         }
+    }
+
+    /**
+     * Add a book to user's favorites.
+     */
+    @Transactional
+    public void addFavorite(Long userId, FavoriteBookRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        Book book = bookRepository.findById(request.getBookId())
+                .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+
+        if (favoriteBookRepository.existsByUserIdAndBookId(userId, request.getBookId())) {
+            throw new IllegalArgumentException("Book is already in favorites");
+        }
+
+        FavoriteBook favoriteBook = new FavoriteBook();
+        FavoriteBook.FavoriteBookId id = new FavoriteBook.FavoriteBookId(userId, request.getBookId());
+        favoriteBook.setId(id);
+        favoriteBook.setUser(user);
+        favoriteBook.setBook(book);
+
+        favoriteBookRepository.save(favoriteBook);
+    }
+
+    /**
+     * Remove a book from user's favorites.
+     */
+    @Transactional
+    public void removeFavorite(Long userId, Long bookId) {
+        if (!favoriteBookRepository.existsByUserIdAndBookId(userId, bookId)) {
+            throw new IllegalArgumentException("Book is not in favorites");
+        }
+
+        favoriteBookRepository.deleteByUserIdAndBookId(userId, bookId);
+    }
+
+    /**
+     * Get all favorite books for a user.
+     */
+    @Transactional(readOnly = true)
+    public List<BookResponse> getUserFavorites(Long userId) {
+        List<FavoriteBook> favorites = favoriteBookRepository.findByUserIdWithBooks(userId);
+
+        return favorites.stream()
+                .map(fb -> {
+                    Book book = fb.getBook();
+                    String author = book.getAuthors().isEmpty() ? "Unknown" 
+                            : book.getAuthors().iterator().next().getName();
+                    
+                    return new BookResponse(
+                            book.getId(),
+                            book.getTitle(),
+                            author,
+                            0.0,
+                            book.getCoverUrl(),
+                            null
+                    );
+                })
+                .collect(Collectors.toList());
     }
 }
