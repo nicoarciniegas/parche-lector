@@ -103,7 +103,7 @@ Iniciar sesión.
 ---
 
 #### GET /auth/me
-Obtener perfil del usuario autenticado.
+Obtener perfil del usuario autenticado. **Requiere autenticación.**
 
 **Headers:** `Authorization: Bearer <token>`
 
@@ -126,6 +126,93 @@ Obtener perfil del usuario autenticado.
         "rating": 4.9,
         "cover": "https://...",
         "status": "leido"
+      }
+    ]
+  }
+}
+```
+
+---
+
+#### PUT /auth/me
+Actualizar perfil del usuario autenticado. **Requiere autenticación.**
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "username": "ana_lector_nueva",
+  "bio": "Nueva biografía actualizada",
+  "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Ana2"
+}
+```
+
+**Notas:**
+- Todos los campos son opcionales
+- Solo se actualizarán los campos enviados
+- El username debe ser único
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Profile updated successfully",
+  "data": {
+    "userName": "ana_lector_nueva",
+    "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Ana2",
+    "bio": "Nueva biografía actualizada",
+    "followers": 128,
+    "following": 42,
+    "userBooks": [...]
+  }
+}
+```
+
+---
+
+#### GET /auth/activity
+Obtener actividad del usuario autenticado (reviews, listas, estadísticas). **Requiere autenticación.**
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Activity retrieved successfully",
+  "data": {
+    "stats": {
+      "totalReviews": 15,
+      "totalReadLists": 3,
+      "booksRead": 42,
+      "booksReading": 5,
+      "booksToRead": 18,
+      "averageRating": 4.2
+    },
+    "recentReviews": [
+      {
+        "id": 1,
+        "bookId": 1,
+        "bookTitle": "Cien años de soledad",
+        "bookCover": "https://...",
+        "rating": 4.9,
+        "title": "Una obra maestra",
+        "body": "Increíble narrativa...",
+        "createdAt": "2025-11-20 15:30:00",
+        "likes": 23,
+        "comments": 5
+      }
+    ],
+    "readLists": [
+      {
+        "id": 1,
+        "name": "Clásicos latinoamericanos",
+        "description": "Mejores libros de literatura...",
+        "visibility": "PUBLIC",
+        "bookCount": 12,
+        "createdAt": "2025-10-15 10:00:00",
+        "likes": 45
       }
     ]
   }
@@ -320,13 +407,27 @@ curl -X POST http://localhost:8080/auth/reset-password \
   -d '{"token":"TOKEN_DEL_EMAIL","newPassword":"nuevaPassword123"}'
 ```
 
-### 3. Usar Endpoints Protegidos
+### 3. Gestión de Perfil (Con Autenticación)
 
 ```bash
 # Obtener perfil (reemplaza <TOKEN> con tu token JWT)
 curl -X GET http://localhost:8080/auth/me \
   -H "Authorization: Bearer <TOKEN>"
 
+# Actualizar perfil
+curl -X PUT http://localhost:8080/auth/me \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"nuevo_nombre","bio":"Nueva bio","avatarUrl":"https://..."}'
+
+# Obtener actividad (reviews, listas, stats)
+curl -X GET http://localhost:8080/auth/activity \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+### 4. Gestión de Libros (Con Autenticación)
+
+```bash
 # Obtener libros en tendencia
 curl -X GET http://localhost:8080/books/trending?limit=10 \
   -H "Authorization: Bearer <TOKEN>"
@@ -355,10 +456,12 @@ curl -X POST http://localhost:8080/books/reading-status \
   - `POST /auth/forgot-password`
   - `POST /auth/reset-password`
 - **Endpoints protegidos (requieren JWT):**
-  - `GET /auth/me`
-  - `GET /books/trending`
-  - `GET /books/search`
-  - `POST /books/reading-status`
+  - `GET /auth/me` - Obtener perfil
+  - `PUT /auth/me` - Actualizar perfil
+  - `GET /auth/activity` - Obtener actividad (reviews, listas, stats)
+  - `GET /books/trending` - Libros en tendencia
+  - `GET /books/search` - Buscar libros
+  - `POST /books/reading-status` - Actualizar estado de lectura
 - La documentación se genera automáticamente desde el código
 - Todos los endpoints están documentados en Swagger UI
 - El manejo de errores está centralizado y devuelve códigos HTTP apropiados

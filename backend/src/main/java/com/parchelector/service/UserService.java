@@ -106,4 +106,37 @@ public class UserService {
                 return "por_leer";
         }
     }
+
+    /**
+     * Update user profile information.
+     */
+    @Transactional
+    public UserProfileResponse updateUserProfile(Long userId, String username, String bio, String avatarUrl) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Update only non-null fields
+        if (username != null && !username.trim().isEmpty()) {
+            // Check if username is already taken by another user
+            userRepository.findByUsername(username.trim()).ifPresent(existingUser -> {
+                if (!existingUser.getId().equals(userId)) {
+                    throw new IllegalArgumentException("Username already taken");
+                }
+            });
+            user.setUsername(username.trim());
+        }
+
+        if (bio != null) {
+            user.setBio(bio.trim());
+        }
+
+        if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
+            user.setAvatarUrl(avatarUrl.trim());
+        }
+
+        userRepository.save(user);
+
+        // Return updated profile
+        return getUserProfile(userId);
+    }
 }

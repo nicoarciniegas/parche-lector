@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -20,4 +21,19 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.book.id = :bookId AND r.isDeleted = false")
     Double getAverageRatingByBookId(Long bookId);
+    
+    @Query("SELECT r FROM Review r WHERE r.user.id = :userId AND r.isDeleted = false ORDER BY r.createdAt DESC")
+    List<Review> findByUserIdOrderByCreatedAtDesc(Long userId);
+    
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.user.id = :userId AND r.isDeleted = false")
+    int countByUserId(Long userId);
+    
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.user.id = :userId AND r.isDeleted = false")
+    Double getAverageRatingByUserId(Long userId);
+    
+    @Query("SELECT COUNT(rl) FROM ReviewLike rl WHERE rl.review.id = :reviewId")
+    int countLikesByReviewId(Long reviewId);
+    
+    @Query("SELECT COUNT(rc) FROM ReviewComment rc WHERE rc.review.id = :reviewId AND rc.isDeleted = false")
+    int countCommentsByReviewId(Long reviewId);
 }

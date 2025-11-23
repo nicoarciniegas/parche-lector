@@ -5,10 +5,13 @@ import com.parchelector.dto.request.ForgotPasswordRequest;
 import com.parchelector.dto.request.LoginRequest;
 import com.parchelector.dto.request.RegisterRequest;
 import com.parchelector.dto.request.ResetPasswordRequest;
+import com.parchelector.dto.request.UpdateProfileRequest;
 import com.parchelector.dto.response.AuthResponse;
+import com.parchelector.dto.response.UserActivityResponse;
 import com.parchelector.dto.response.UserProfileResponse;
 import com.parchelector.model.entity.User;
 import com.parchelector.repository.UserRepository;
+import com.parchelector.service.ActivityService;
 import com.parchelector.service.AuthService;
 import com.parchelector.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,6 +40,9 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ActivityService activityService;
 
     @Autowired
     private UserRepository userRepository;
@@ -166,6 +172,78 @@ public class AuthController {
                     null
             );
             return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PutMapping("/update")
+    @Operation(summary = "Update current user profile", security = @SecurityRequirement(name = "bearer-jwt"))
+    public ResponseEntity<ApiResponse<UserProfileResponse>> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            // Find user by username
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+            // Update profile
+            UserProfileResponse updatedProfile = userService.updateUserProfile(
+                    user.getId(),
+                    request.getUsername(),
+                    request.getBio(),
+                    request.getAvatarUrl()
+            );
+
+            ApiResponse<UserProfileResponse> response = new ApiResponse<>(
+                    "SUCCESS",
+                    "Profile updated successfully",
+                    updatedProfile
+            );
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            ApiResponse<UserProfileResponse> response = new ApiResponse<>(
+                    "ERROR",
+                    e.getMessage(),
+                    null
+            );
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            ApiResponse<UserProfileResponse> response = new ApiResponse<>(
+                    "ERROR",
+                    "Failed to update profile: " + e.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/activity")
+    @Operation(summary = "Get current user activity", security = @SecurityRequirement(name = "bearer-jwt"))
+    public ResponseEntity<ApiResponse<UserActivityResponse>> getUserActivity() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            // Find user by username
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+            // Get activity data
+            UserActivityResponse activity = activityService.getUserActivity(user.getId());
+
+            ApiResponse<UserActivityResponse> response = new ApiResponse<>(
+                    "SUCCESS",
+                    "Activity retrieved successfully",
+                    activity
+            );
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<UserActivityResponse> response = new ApiResponse<>(
+                    "ERROR",
+                    e.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 }
