@@ -134,7 +134,7 @@ Obtener perfil del usuario autenticado. **Requiere autenticación.**
 
 ---
 
-#### PUT /auth/me
+#### PUT /auth/update
 Actualizar perfil del usuario autenticado. **Requiere autenticación.**
 
 **Headers:** `Authorization: Bearer <token>`
@@ -366,6 +366,190 @@ Actualizar el estado de lectura de un libro.
 
 ---
 
+### 📋 Lists (`/lists`)
+
+#### POST /lists
+Crear una nueva lista de lectura personalizada.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "name": "Clásicos latinoamericanos",
+  "description": "Mejores libros de literatura latinoamericana",
+  "visibility": "PUBLIC"
+}
+```
+
+**Valores válidos para `visibility`:**
+- `"PUBLIC"` - Visible para todos (default)
+- `"PRIVATE"` - Solo visible para el dueño
+- `"FOLLOWERS_ONLY"` - Solo visible para seguidores
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "List created successfully",
+  "data": {
+    "id": 1,
+    "name": "Clásicos latinoamericanos",
+    "description": "Mejores libros de literatura latinoamericana",
+    "visibility": "PUBLIC",
+    "userId": 1,
+    "username": "ana_lector",
+    "createdAt": "2025-11-22 20:00:00",
+    "updatedAt": "2025-11-22 20:00:00",
+    "bookCount": 0,
+    "likeCount": 0,
+    "books": []
+  }
+}
+```
+
+---
+
+#### GET /lists/{id}
+Obtener detalles de una lista específica con todos sus libros.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "List retrieved successfully",
+  "data": {
+    "id": 1,
+    "name": "Clásicos latinoamericanos",
+    "description": "Mejores libros de literatura latinoamericana",
+    "visibility": "PUBLIC",
+    "userId": 1,
+    "username": "ana_lector",
+    "createdAt": "2025-11-22 20:00:00",
+    "updatedAt": "2025-11-22 20:00:00",
+    "bookCount": 2,
+    "likeCount": 5,
+    "books": [
+      {
+        "bookId": 1,
+        "title": "Cien años de soledad",
+        "coverUrl": "https://...",
+        "authors": ["Gabriel García Márquez"],
+        "position": 1,
+        "note": "Mi favorito absoluto",
+        "addedAt": "2025-11-22 20:05:00"
+      },
+      {
+        "bookId": 2,
+        "title": "Rayuela",
+        "coverUrl": "https://...",
+        "authors": ["Julio Cortázar"],
+        "position": 2,
+        "note": null,
+        "addedAt": "2025-11-22 20:10:00"
+      }
+    ]
+  }
+}
+```
+
+---
+
+#### PUT /lists/{id}
+Actualizar una lista existente (solo el dueño puede hacerlo).
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:** (todos los campos son opcionales)
+```json
+{
+  "name": "Clásicos imprescindibles",
+  "description": "Nueva descripción actualizada",
+  "visibility": "FOLLOWERS_ONLY"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "List updated successfully",
+  "data": {
+    "id": 1,
+    "name": "Clásicos imprescindibles",
+    "description": "Nueva descripción actualizada",
+    "visibility": "FOLLOWERS_ONLY",
+    ...
+  }
+}
+```
+
+---
+
+#### DELETE /lists/{id}
+Eliminar una lista (solo el dueño puede hacerlo).
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "List deleted successfully",
+  "data": null
+}
+```
+
+---
+
+#### POST /lists/{id}/books
+Añadir un libro a una lista.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "bookId": 1,
+  "position": 1,
+  "note": "Mi favorito absoluto"
+}
+```
+
+**Notas:**
+- `position` es opcional (default: 1)
+- `note` es opcional (máximo 255 caracteres)
+- No se puede añadir el mismo libro dos veces a la misma lista
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Book added to list successfully",
+  "data": null
+}
+```
+
+---
+
+#### DELETE /lists/{id}/books/{bookId}
+Remover un libro de una lista.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Book removed from list successfully",
+  "data": null
+}
+```
+
+---
+
 ## 🔧 Códigos de Estado HTTP
 
 - `200 OK` - Solicitud exitosa
@@ -415,7 +599,7 @@ curl -X GET http://localhost:8080/auth/me \
   -H "Authorization: Bearer <TOKEN>"
 
 # Actualizar perfil
-curl -X PUT http://localhost:8080/auth/me \
+curl -X PUT http://localhost:8080/auth/update \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"username":"nuevo_nombre","bio":"Nueva bio","avatarUrl":"https://..."}'
@@ -443,6 +627,40 @@ curl -X POST http://localhost:8080/books/reading-status \
   -d '{"bookId":1,"status":"READING"}'
 ```
 
+### 5. Gestión de Listas de Lectura (Con Autenticación)
+
+```bash
+# Crear una nueva lista
+curl -X POST http://localhost:8080/lists \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Mis favoritos","description":"Los mejores libros","visibility":"PUBLIC"}'
+
+# Obtener detalles de una lista
+curl -X GET http://localhost:8080/lists/1 \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Actualizar una lista
+curl -X PUT http://localhost:8080/lists/1 \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Nuevo nombre","visibility":"PRIVATE"}'
+
+# Eliminar una lista
+curl -X DELETE http://localhost:8080/lists/1 \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Añadir un libro a la lista
+curl -X POST http://localhost:8080/lists/1/books \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"bookId":1,"position":1,"note":"Mi favorito"}'
+
+# Remover un libro de la lista
+curl -X DELETE http://localhost:8080/lists/1/books/1 \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
 ---
 
 ## 📝 Notas Importantes
@@ -457,11 +675,17 @@ curl -X POST http://localhost:8080/books/reading-status \
   - `POST /auth/reset-password`
 - **Endpoints protegidos (requieren JWT):**
   - `GET /auth/me` - Obtener perfil
-  - `PUT /auth/me` - Actualizar perfil
+  - `PUT /auth/update` - Actualizar perfil
   - `GET /auth/activity` - Obtener actividad (reviews, listas, stats)
   - `GET /books/trending` - Libros en tendencia
   - `GET /books/search` - Buscar libros
   - `POST /books/reading-status` - Actualizar estado de lectura
+  - `POST /lists` - Crear lista de lectura
+  - `GET /lists/{id}` - Ver detalles de lista
+  - `PUT /lists/{id}` - Actualizar lista
+  - `DELETE /lists/{id}` - Eliminar lista
+  - `POST /lists/{id}/books` - Añadir libro a lista
+  - `DELETE /lists/{id}/books/{bookId}` - Remover libro de lista
 - La documentación se genera automáticamente desde el código
 - Todos los endpoints están documentados en Swagger UI
 - El manejo de errores está centralizado y devuelve códigos HTTP apropiados

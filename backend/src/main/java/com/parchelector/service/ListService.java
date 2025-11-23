@@ -137,6 +137,7 @@ public class ListService {
         }
 
         ListBook listBook = new ListBook();
+        listBook.setId(id);
         listBook.setList(list);
         listBook.setBook(book);
         listBook.setPosition(request.getPosition() != null ? request.getPosition() : 1);
