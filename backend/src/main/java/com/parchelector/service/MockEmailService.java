@@ -1,16 +1,19 @@
 package com.parchelector.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 /**
- * Mock Email Service for development/testing without real email.
- * Replace EmailService with this in AuthService to test without email setup.
+ * Mock Email Service for production/testing without real email.
+ * Active in 'prod' profile where email configuration is not available.
+ * Logs password reset information to console instead of sending emails.
  * 
  * @author Nicolas Arciniegas
  */
 @Service
-public class MockEmailService {
+@Profile("prod")
+public class MockEmailService implements IEmailService {
 
     @Value("${app.frontend.url}")
     private String frontendUrl;

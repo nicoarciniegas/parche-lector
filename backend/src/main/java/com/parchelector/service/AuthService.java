@@ -45,7 +45,7 @@ public class AuthService {
     private PasswordResetTokenRepository tokenRepository;
 
     @Autowired
-    private EmailService emailService;
+    private IEmailService emailService;
 
     private static final SecureRandom secureRandom = new SecureRandom();
 
