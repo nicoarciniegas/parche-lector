@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -27,4 +28,7 @@ public interface FollowRepository extends JpaRepository<Follow, FollowId> {
     void deleteByFollowerIdAndFollowedId(Long followerId, Long followedId);
 
     Optional<Follow> findByFollowerIdAndFollowedId(Long followerId, Long followedId);
+
+    @Query("SELECT f.followedId FROM Follow f WHERE f.followerId = :userId")
+    List<Long> findFollowedUserIds(Long userId);
 }

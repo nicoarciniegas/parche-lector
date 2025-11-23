@@ -42,4 +42,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     
     @Query("SELECT COUNT(r) FROM Review r WHERE r.book.id = :bookId AND r.isDeleted = false")
     int countByBookId(Long bookId);
+
+    @Query("SELECT r FROM Review r JOIN FETCH r.user JOIN FETCH r.book WHERE r.user.id IN :userIds AND r.isDeleted = false ORDER BY r.createdAt DESC")
+    List<Review> findByUserIdsOrderByCreatedAtDesc(List<Long> userIds);
 }

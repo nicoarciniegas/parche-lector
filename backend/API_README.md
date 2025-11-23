@@ -973,6 +973,81 @@ Verificar si sigues a un autor específico.
 
 ---
 
+#### GET /social/feed
+Obtener feed de actividad reciente de las personas que sigues.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `limit` (opcional): Número de items a retornar (default: 20)
+- `offset` (opcional): Número de items a saltar para paginación (default: 0)
+
+**Example:** `GET /social/feed?limit=10&offset=0`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Feed retrieved successfully",
+  "data": {
+    "items": [
+      {
+        "type": "REVIEW",
+        "userId": 2,
+        "username": "carlos_reader",
+        "userAvatar": "https://...",
+        "createdAt": "2025-11-22 23:15:00",
+        "review": {
+          "reviewId": 5,
+          "bookId": 3,
+          "bookTitle": "El amor en los tiempos del cólera",
+          "bookCover": "https://...",
+          "rating": 4.8,
+          "title": "Hermosa historia",
+          "body": "García Márquez en su máxima expresión...",
+          "likes": 12,
+          "comments": 3
+        },
+        "list": null
+      },
+      {
+        "type": "LIST",
+        "userId": 3,
+        "username": "maria_books",
+        "userAvatar": "https://...",
+        "createdAt": "2025-11-22 22:30:00",
+        "review": null,
+        "list": {
+          "listId": 8,
+          "name": "Ciencia ficción imprescindible",
+          "description": "Los mejores libros del género",
+          "visibility": "PUBLIC",
+          "bookCount": 15,
+          "likes": 28
+        }
+      }
+    ],
+    "total": 45,
+    "limit": 20,
+    "offset": 0,
+    "hasMore": true
+  }
+}
+```
+
+**Notas:**
+- El feed combina reviews y listas creadas por los usuarios que sigues
+- Los items están ordenados por fecha de creación (más recientes primero)
+- Las listas privadas no aparecen en el feed
+- `hasMore`: `true` si hay más items disponibles para cargar
+- Si no sigues a nadie, retorna un array vacío
+
+**Tipos de items:**
+- `"REVIEW"` - Una nueva reseña publicada
+- `"LIST"` - Una nueva lista de lectura creada
+
+---
+
 ## 🔧 Códigos de Estado HTTP
 
 - `200 OK` - Solicitud exitosa
@@ -1164,6 +1239,10 @@ curl -X GET http://localhost:8080/social/follow/user/2/status \
 # Verificar si sigues a un autor
 curl -X GET http://localhost:8080/social/follow/author/5/status \
   -H "Authorization: Bearer <TOKEN>"
+
+# Obtener feed de actividad de personas que sigues
+curl -X GET "http://localhost:8080/social/feed?limit=20&offset=0" \
+  -H "Authorization: Bearer <TOKEN>"
 ```
 
 ---
@@ -1206,6 +1285,7 @@ curl -X GET http://localhost:8080/social/follow/author/5/status \
   - `GET /social/users/{userId}/stats` - Ver estadísticas de seguidores
   - `GET /social/follow/user/{userId}/status` - Verificar si sigues a un usuario
   - `GET /social/follow/author/{authorId}/status` - Verificar si sigues a un autor
+  - `GET /social/feed` - Ver feed de actividad de usuarios que sigues
 - La documentación se genera automáticamente desde el código
 - Todos los endpoints están documentados en Swagger UI
 - El manejo de errores está centralizado y devuelve códigos HTTP apropiados

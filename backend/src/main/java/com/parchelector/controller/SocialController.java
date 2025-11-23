@@ -3,12 +3,14 @@ package com.parchelector.controller;
 import com.parchelector.dto.ApiResponse;
 import com.parchelector.dto.request.FollowAuthorRequest;
 import com.parchelector.dto.request.FollowUserRequest;
+import com.parchelector.dto.response.FeedResponse;
 import com.parchelector.dto.response.FollowResponse;
 import com.parchelector.dto.response.UserFollowStatsResponse;
 import com.parchelector.model.entity.User;
 import com.parchelector.repository.UserRepository;
 import com.parchelector.service.SocialService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -246,6 +248,34 @@ public class SocialController {
             ApiResponse<Boolean> apiResponse = new ApiResponse<>(
                     "ERROR",
                     "Failed to check follow status: " + e.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);
+        }
+    }
+
+    /**
+     * Get social feed with activity from followed users.
+     */
+    @GetMapping("/feed")
+    @Operation(summary = "Get social feed from followed users", security = @SecurityRequirement(name = "bearer-jwt"))
+    public ResponseEntity<ApiResponse<FeedResponse>> getFeed(
+            @Parameter(description = "Number of items to return") @RequestParam(defaultValue = "20") Integer limit,
+            @Parameter(description = "Number of items to skip") @RequestParam(defaultValue = "0") Integer offset) {
+        try {
+            Long currentUserId = getCurrentUserId();
+            FeedResponse feed = socialService.getFeed(currentUserId, limit, offset);
+            
+            ApiResponse<FeedResponse> apiResponse = new ApiResponse<>(
+                    "SUCCESS",
+                    "Feed retrieved successfully",
+                    feed
+            );
+            return ResponseEntity.ok(apiResponse);
+        } catch (Exception e) {
+            ApiResponse<FeedResponse> apiResponse = new ApiResponse<>(
+                    "ERROR",
+                    "Failed to retrieve feed: " + e.getMessage(),
                     null
             );
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);

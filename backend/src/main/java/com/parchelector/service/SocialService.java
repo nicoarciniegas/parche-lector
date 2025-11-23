@@ -2,6 +2,10 @@ package com.parchelector.service;
 
 import com.parchelector.dto.request.FollowAuthorRequest;
 import com.parchelector.dto.request.FollowUserRequest;
+import com.parchelector.dto.response.FeedResponse;
+import com.parchelector.dto.response.FeedResponse.FeedItem;
+import com.parchelector.dto.response.FeedResponse.ReviewData;
+import com.parchelector.dto.response.FeedResponse.ListData;
 import com.parchelector.dto.response.FollowResponse;
 import com.parchelector.dto.response.UserFollowStatsResponse;
 import com.parchelector.model.entity.*;
@@ -9,6 +13,11 @@ import com.parchelector.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Service for social features (follows, etc.).
@@ -29,6 +38,15 @@ public class SocialService {
 
     @Autowired
     private AuthorRepository authorRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+
+    @Autowired
+    private LibraryListRepository libraryListRepository;
+
+    @Autowired
+    private ListLikeRepository listLikeRepository;
 
     /**
      * Follow a user.
@@ -157,5 +175,91 @@ public class SocialService {
      */
     public boolean isFollowingAuthor(Long userId, Long authorId) {
         return authorFollowRepository.existsByUserIdAndAuthorId(userId, authorId);
+    }
+
+    /**
+     * Get social feed with recent activity from followed users.
+     */
+    public FeedResponse getFeed(Long userId, Integer limit, Integer offset) {
+        // Get list of followed user IDs
+        List<Long> followedUserIds = followRepository.findFollowedUserIds(userId);
+        
+        if (followedUserIds.isEmpty()) {
+            return new FeedResponse(new ArrayList<>(), 0, limit, offset, false);
+        }
+
+        // Fetch reviews from followed users
+        List<Review> reviews = reviewRepository.findByUserIdsOrderByCreatedAtDesc(followedUserIds);
+        
+        // Fetch lists from followed users
+        List<LibraryList> lists = libraryListRepository.findByUserIdsOrderByCreatedAtDesc(followedUserIds);
+
+        // Convert to feed items
+        List<FeedItem> feedItems = new ArrayList<>();
+
+        // Add reviews to feed
+        for (Review review : reviews) {
+            FeedItem item = new FeedItem();
+            item.setType("REVIEW");
+            item.setUserId(review.getUser().getId());
+            item.setUsername(review.getUser().getUsername());
+            item.setUserAvatar(review.getUser().getAvatarUrl());
+            item.setCreatedAt(review.getCreatedAt());
+
+            ReviewData reviewData = new ReviewData();
+            reviewData.setReviewId(review.getId());
+            reviewData.setBookId(review.getBook().getId());
+            reviewData.setBookTitle(review.getBook().getTitle());
+            reviewData.setBookCover(review.getBook().getCoverUrl());
+            reviewData.setRating(review.getRating().doubleValue());
+            reviewData.setTitle(review.getTitle());
+            reviewData.setBody(review.getBody());
+            reviewData.setLikes(reviewRepository.countLikesByReviewId(review.getId()));
+            reviewData.setComments(reviewRepository.countCommentsByReviewId(review.getId()));
+
+            item.setReview(reviewData);
+            feedItems.add(item);
+        }
+
+        // Add lists to feed
+        for (LibraryList list : lists) {
+            // Skip private lists or followers-only lists if needed
+            if ("PRIVATE".equals(list.getVisibility())) {
+                continue;
+            }
+
+            User listUser = list.getUser();
+            if (listUser == null) continue;
+
+            FeedItem item = new FeedItem();
+            item.setType("LIST");
+            item.setUserId(listUser.getId());
+            item.setUsername(listUser.getUsername());
+            item.setUserAvatar(listUser.getAvatarUrl());
+            item.setCreatedAt(list.getCreatedAt());
+
+            ListData listData = new ListData();
+            listData.setListId(list.getId());
+            listData.setName(list.getName());
+            listData.setDescription(list.getDescription());
+            listData.setVisibility(list.getVisibility());
+            listData.setBookCount(libraryListRepository.countBooksByListId(list.getId()));
+            listData.setLikes(listLikeRepository.countByListId(list.getId()));
+
+            item.setList(listData);
+            feedItems.add(item);
+        }
+
+        // Sort all feed items by createdAt descending
+        feedItems.sort(Comparator.comparing(FeedItem::getCreatedAt).reversed());
+
+        // Apply pagination
+        int total = feedItems.size();
+        int start = Math.min(offset, total);
+        int end = Math.min(offset + limit, total);
+        List<FeedItem> paginatedItems = feedItems.subList(start, end);
+        boolean hasMore = end < total;
+
+        return new FeedResponse(paginatedItems, total, limit, offset, hasMore);
     }
 }
