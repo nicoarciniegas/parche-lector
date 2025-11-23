@@ -66,9 +66,9 @@ public class ActivityService {
         int totalReviews = reviewRepository.countByUserId(userId);
         int totalReadLists = (int) libraryListRepository.findByUserIdOrderByCreatedAtDesc(userId).size();
         
-        int booksRead = readingStatusRepository.countByUserIdAndStatus(userId, ReadingStatusEnum.READ.name());
-        int booksReading = readingStatusRepository.countByUserIdAndStatus(userId, ReadingStatusEnum.READING.name());
-        int booksToRead = readingStatusRepository.countByUserIdAndStatus(userId, ReadingStatusEnum.WANT_TO_READ.name());
+        int booksRead = readingStatusRepository.countByUserIdAndStatus(userId, ReadingStatusEnum.READ);
+        int booksReading = readingStatusRepository.countByUserIdAndStatus(userId, ReadingStatusEnum.READING);
+        int booksToRead = readingStatusRepository.countByUserIdAndStatus(userId, ReadingStatusEnum.WANT_TO_READ);
         
         Double averageRating = reviewRepository.getAverageRatingByUserId(userId);
         if (averageRating == null) {

@@ -27,5 +27,5 @@ public interface ReadingStatusRepository extends JpaRepository<ReadingStatus, Lo
     Optional<ReadingStatus> findByUserIdAndBookId(Long userId, Long bookId);
     
     @Query("SELECT COUNT(rs) FROM ReadingStatus rs WHERE rs.user.id = :userId AND rs.status = :status")
-    int countByUserIdAndStatus(Long userId, String status);
+    int countByUserIdAndStatus(Long userId, ReadingStatus.ReadingStatusEnum status);
 }
