@@ -810,6 +810,165 @@ Obtener la reseña del usuario actual para un libro específico.
 
 ---
 
+### 💬 Review Interactions (`/reviews/{reviewId}/...`)
+
+#### POST /reviews/{reviewId}/likes
+Dar like a una reseña.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Review liked successfully",
+  "data": null
+}
+```
+
+**Errores posibles:**
+- `Review not found` - La reseña no existe
+- `Cannot like a deleted review` - La reseña está eliminada
+- `You have already liked this review` - Ya diste like a esta reseña
+
+---
+
+#### DELETE /reviews/{reviewId}/likes
+Quitar like de una reseña.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Review unliked successfully",
+  "data": null
+}
+```
+
+**Errores posibles:**
+- `You have not liked this review` - No has dado like a esta reseña
+
+---
+
+#### GET /reviews/{reviewId}/likes/status
+Verificar si el usuario actual ha dado like a una reseña.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Like status retrieved successfully",
+  "data": true
+}
+```
+
+**Valores posibles:** `true` (con like) o `false` (sin like)
+
+---
+
+#### POST /reviews/{reviewId}/comments
+Agregar un comentario a una reseña.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "body": "Excelente análisis, estoy totalmente de acuerdo con tu perspectiva..."
+}
+```
+
+**Notas:**
+- `body` es requerido y tiene un máximo de 1000 caracteres
+- No puedes comentar en reseñas eliminadas
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Comment added successfully",
+  "data": {
+    "id": 1,
+    "reviewId": 5,
+    "userId": 1,
+    "username": "ana_lector",
+    "userAvatar": "https://...",
+    "body": "Excelente análisis...",
+    "createdAt": "2025-11-22 23:45:00"
+  }
+}
+```
+
+**Errores posibles:**
+- `Review not found` - La reseña no existe
+- `Cannot comment on a deleted review` - La reseña está eliminada
+
+---
+
+#### GET /reviews/{reviewId}/comments
+Obtener todos los comentarios de una reseña.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Comments retrieved successfully",
+  "data": [
+    {
+      "id": 1,
+      "reviewId": 5,
+      "userId": 1,
+      "username": "ana_lector",
+      "userAvatar": "https://...",
+      "body": "Excelente análisis...",
+      "createdAt": "2025-11-22 23:45:00"
+    },
+    {
+      "id": 2,
+      "reviewId": 5,
+      "userId": 3,
+      "username": "maria_books",
+      "userAvatar": "https://...",
+      "body": "Comparto tu opinión...",
+      "createdAt": "2025-11-22 23:50:00"
+    }
+  ]
+}
+```
+
+**Notas:**
+- Los comentarios están ordenados por fecha (más antiguos primero)
+- Solo se muestran comentarios no eliminados
+
+---
+
+#### DELETE /reviews/{reviewId}/comments/{commentId}
+Eliminar un comentario (soft delete, solo el autor puede hacerlo).
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": "SUCCESS",
+  "message": "Comment deleted successfully",
+  "data": null
+}
+```
+
+**Errores posibles:**
+- `Comment not found` - El comentario no existe
+- `You can only delete your own comments` - Solo puedes eliminar tus propios comentarios
+- `Comment is already deleted` - El comentario ya está eliminado
+
+---
+
 ### 👥 Social (`/social`)
 
 #### POST /social/follow/user
@@ -1205,7 +1364,37 @@ curl -X GET http://localhost:8080/reviews/book/1/my-review \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
-### 8. Funciones Sociales (Con Autenticación)
+### 8. Interacciones con Reseñas (Con Autenticación)
+
+```bash
+# Dar like a una reseña
+curl -X POST http://localhost:8080/reviews/5/likes \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Quitar like de una reseña
+curl -X DELETE http://localhost:8080/reviews/5/likes \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Verificar si has dado like a una reseña
+curl -X GET http://localhost:8080/reviews/5/likes/status \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Agregar un comentario a una reseña
+curl -X POST http://localhost:8080/reviews/5/comments \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"body":"Excelente análisis, muy completo..."}'
+
+# Ver todos los comentarios de una reseña
+curl -X GET http://localhost:8080/reviews/5/comments \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Eliminar un comentario
+curl -X DELETE http://localhost:8080/reviews/5/comments/1 \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+### 9. Funciones Sociales (Con Autenticación)
 
 ```bash
 # Seguir a un usuario
@@ -1278,6 +1467,12 @@ curl -X GET "http://localhost:8080/social/feed?limit=20&offset=0" \
   - `DELETE /reviews/{id}` - Eliminar reseña
   - `GET /reviews/book/{bookId}` - Ver reseñas de un libro
   - `GET /reviews/book/{bookId}/my-review` - Ver mi reseña de un libro
+  - `POST /reviews/{reviewId}/likes` - Dar like a una reseña
+  - `DELETE /reviews/{reviewId}/likes` - Quitar like de una reseña
+  - `GET /reviews/{reviewId}/likes/status` - Verificar si has dado like
+  - `POST /reviews/{reviewId}/comments` - Comentar una reseña
+  - `GET /reviews/{reviewId}/comments` - Ver comentarios de una reseña
+  - `DELETE /reviews/{reviewId}/comments/{commentId}` - Eliminar comentario
   - `POST /social/follow/user` - Seguir usuario
   - `DELETE /social/follow/user/{userId}` - Dejar de seguir usuario
   - `POST /social/follow/author` - Seguir autor
