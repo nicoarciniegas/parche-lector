@@ -36,7 +36,7 @@
         </div>
 
         <div class="forgot-link">
-          <router-link to="/recover">¿Olvidaste tu contraseña?</router-link>
+          <router-link to="/forgot-password">¿Olvidaste tu contraseña?</router-link>
         </div>
 
         <button
