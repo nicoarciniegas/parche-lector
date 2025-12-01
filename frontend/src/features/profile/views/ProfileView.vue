@@ -186,15 +186,24 @@ const following = computed(() => user.value?.following || 0)
 const userBooks = computed(() => user.value?.userBooks || [])
 
 // Filter books by status
-// API returns: READING, READ, WANT_TO_READ
+// API may return: READING/leyendo, READ/leido, WANT_TO_READ/por_leer (case insensitive)
+const normalizeStatus = (status?: string): string => {
+  if (!status) return ''
+  const s = status.toLowerCase()
+  if (s === 'reading' || s === 'leyendo') return 'reading'
+  if (s === 'read' || s === 'leido' || s === 'leído') return 'read'
+  if (s === 'want_to_read' || s === 'por_leer' || s === 'por leer') return 'want_to_read'
+  return s
+}
+
 const readingBooks = computed(() =>
-  userBooks.value.filter((b) => b.status === 'READING')
+  userBooks.value.filter((b) => normalizeStatus(b.status) === 'reading')
 )
 const readBooks = computed(() =>
-  userBooks.value.filter((b) => b.status === 'READ')
+  userBooks.value.filter((b) => normalizeStatus(b.status) === 'read')
 )
 const toReadBooks = computed(() =>
-  userBooks.value.filter((b) => b.status === 'WANT_TO_READ')
+  userBooks.value.filter((b) => normalizeStatus(b.status) === 'want_to_read')
 )
 
 // Edit profile modal state and handlers
@@ -245,9 +254,10 @@ const logout = () => {
 
 const statusLabel = (s?: string) => {
   if (!s) return ''
-  if (s === 'READ') return 'Leído'
-  if (s === 'READING') return 'Leyendo'
-  if (s === 'WANT_TO_READ') return 'Por leer'
+  const normalized = normalizeStatus(s)
+  if (normalized === 'read') return 'Leído'
+  if (normalized === 'reading') return 'Leyendo'
+  if (normalized === 'want_to_read') return 'Por leer'
   return s
 }
 </script>

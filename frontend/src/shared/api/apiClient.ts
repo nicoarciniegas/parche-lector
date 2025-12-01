@@ -3,7 +3,8 @@ import axios from 'axios'
 import { authUtils } from '../../utils/auth'
 
 // API base URL - uses environment variable with fallback to deployed backend
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://parche-lector.onrender.com'
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'https://parche-lector.onrender.com'
 
 // Create axios instance with default config
 export const apiClient = axios.create({
