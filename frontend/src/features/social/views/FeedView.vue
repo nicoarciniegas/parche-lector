@@ -9,6 +9,15 @@
       <div v-else-if="status === 'error'" class="error">Error al cargar el feed</div>
       
       <div v-else class="feed-list">
+        <!-- Empty State -->
+        <div v-if="data?.pages[0]?.items.length === 0" class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h3>Tu feed está vacío</h3>
+          <p>Parece que aún no sigues a nadie o no hay actividad reciente.</p>
+          <p>¡Busca amigos o autores para ver sus reseñas y listas aquí!</p>
+          <router-link :to="{ name: 'explore' }" class="btn-explore">Explorar Libros</router-link>
+        </div>
+
         <div v-for="page in data?.pages" :key="page.offset">
           <div v-for="item in page.items" :key="getKey(item)" class="feed-item">
             
@@ -186,5 +195,35 @@ const formatDate = (dateStr: string) => {
   align-items: center;
   justify-content: center;
   color: #666;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  color: #666;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.btn-explore {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #2e5266;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.btn-explore:hover {
+  background-color: #1a3a4a;
 }
 </style>
