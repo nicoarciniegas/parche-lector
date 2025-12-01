@@ -24,9 +24,11 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
+        // Support login by username OR email: try to find by username first,
+        // then by email using the repository helper method.
+        User user = userRepository.findByUsernameOrEmail(username, username)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found with username: " + username)
+                        new UsernameNotFoundException("User not found with username or email: " + username)
                 );
 
         if (!user.getActive()) {
