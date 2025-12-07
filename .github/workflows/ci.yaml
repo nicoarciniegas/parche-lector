@@ -8,7 +8,7 @@ on:
 
 jobs:
   backend-build:
-    name: Build Backend (Spring Boot)
+    name: Build & Test Backend (Spring Boot)
     runs-on: ubuntu-latest
 
     steps:
@@ -28,11 +28,12 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Build backend with Maven
-        run: mvn -B -f backend/pom.xml clean package -DskipTests
+      - name: Run backend tests & build
+        run: mvn -B -f backend/pom.xml clean verify
+        # clean verify = compila + corre tests + empaqueta (si los tests pasan)
 
   frontend-build:
-    name: Build Frontend (Vue + Vite)
+    name: Test & Build Frontend (Vue + Vite)
     runs-on: ubuntu-latest
 
     steps:
@@ -47,6 +48,10 @@ jobs:
       - name: Install dependencies
         working-directory: ./frontend
         run: npm install
+
+      - name: Run frontend tests (Vitest)
+        working-directory: ./frontend
+        run: npm test
 
       - name: Build frontend
         working-directory: ./frontend
